@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>PyFlashCards</title>
+  <script type="text/javascript">
+    var cardIndex = 0;
+    var cardSubmitted = true;
+    var discardPile = 0;
+    var mistakePile = []
+
+    var data_unit1_1 = [
+      [`Mr. Smith`, `If the userAge is at least 21, tell the user "You can buy drinks!".`, `if userAge >= 21:\n\tprint('You can buy drinks!')`],
+      [`Mr. Smith`, `If the userAge is at least 21, tell the user "You can buy drinks!"Otherwise, if the userAge is at least 18, tell the user "You cannot buy drinks yet.".Otherwise, tell the user "Where are your parents?!"`, `if userAge >= 21:\n\tprint('You can buy drinks!')\nelif userAge >= 18:\n\tprint('You cannot buy drinks yet.')\nelse:\n\tprint('Where are your parents?!')`],
+      [`Mr. Smith`, `Convert userAge to an integer, and assign the value to 'userAge'.`, `userAge = int(userAge)`],
+      [`Mr. Smith`, `As the user "What is your age?" and store there response to a variable name 'userAge'.`, `userAge = input('What is your age?')`],
+      [`Mr. Smith`, `Ask the user "What is your name?", and store the response to a variable named "userName".`, `userName = input('What is your name?')`],
+      [`Mr. Smith`, `'userAge' is an integer.Print to the console "Your age is " plus userAge.`, `print('Your age is ' + str(userAge))`],
+      [`Mr. Smith`, `Tell the user "Your hair looks dumb."`, `print('Your hair looks dumb.')`],
+      [`Mr. Smith`, `Tell the user "I'm sorry. I shouldn't have called your hair dumb."`, `print('I\\\'m sorry. I shouldn\\\'t have called your hair dumb.')`],
+      [`Ryan Stevenson`, `Ask the user "Is Mr.Smith is hansome",If the mrSmith is hansome is yes or yep or definitly, tell the user "Yes I am."Otherwise, tell the user "Your wrong"`, `mrSmith.hansome = input('Is Mr.Smith hansome.')\nif mrSmith.hansome = 'yes' or 'yep' or 'definitly':\n\tprint('Yes I am.')\nelse:\n\tprint('Your wrong')`],
+      [`Ryan Stevenson`, `user has 12 eggs, while user has eggs, trow egg`, `user.eggs = 12,while user.eggs >= 0:\n\tuser.egg -= 1`]
+    ]
+
+    var dataList = data_unit1_1;
+    var data = [];
+    var cardIndex = 0;
+
+    var pullCards = dataList.length
+    for (let i = 0; i < pullCards; i++) {
+      data.push(dataList.splice(Math.floor(Math.random() * dataList.length), 1)[0])
+    }
+
+
+    function parseMeta(question) {
+      let questionMod = question;
+      questionMod = questionMod.replaceAll('\t', '&nbsp;&nbsp;&nbsp;&nbsp;');
+      questionMod = questionMod.replaceAll('\n', '<br>');
+      return questionMod
+    }
+
+    function nextCard() {
+      var results = document.getElementById('results')
+      if (!cardSubmitted) {
+        results.innerHTML = 'You need to submit an answer to this card first!'
+      } else {
+        cardSubmitted = false;
+        var cardPrompt = document.getElementById('cardPrompt');
+        if (data.length) {
+          cardIndex = Math.floor(Math.random() * data.length);
+          cardPrompt.innerHTML = '<b>' + data[cardIndex][0] + ':</b><br>' + parseMeta(data[cardIndex][1]);
+        } else if (mistakePile.length) {
+          cardIndex = Math.floor(Math.random() * mistakePile.length);
+          cardPrompt.innerHTML = '<b>' + mistakePile[cardIndex][0] + ':</b><br>' + parseMeta(mistakePile[cardIndex][1]);
+        } else {
+          cardPrompt.innerHTML = '<b>You win!</b>'
+          var xmlHttp = new XMLHttpRequest();
+          xmlHttp.open("GET", 'http://192.168.10.53:5000/tutd?thumb=up', false); // false for synchronous request
+          xmlHttp.send(null);
+        }
+        document.getElementById('cardAnswer').value = '';
+        document.getElementById('cardAnswer').focus();
+        results.innerHTML = '';
+      }
+      score.innerHTML = `Draw Pile: ${data.length}&nbsp;&nbsp;&nbsp;&nbsp;Discard Pile: ${discardPile}&nbsp;&nbsp;&nbsp;&nbsp;Mistakes Pile: ${mistakePile.length}`;
+    }
+
+    function submitCard() {
+      var score = document.getElementById('score')
+      var results = document.getElementById('results')
+      if (cardSubmitted) {
+        results.innerHTML = 'You already submitted this card!'
+      } else {
+        cardSubmitted = true;
+        var cardAnswer = document.getElementById('cardAnswer').value;
+        let cardCheck = cardAnswer.replaceAll(' ', '')
+        cardCheck = cardCheck.replaceAll('\"', '\'')
+        if (data.length) {
+          if (cardCheck == data[cardIndex][2].replaceAll(' ', '')) {
+            discardPile++;
+            results.innerHTML = `<span style="color: green; font-family: system, consolas;">` + parseMeta(data[cardIndex][2]) + `</span>`;
+            data.splice(cardIndex, 1)
+          } else {
+            results.innerHTML = `<span style="color: red; font-family: system, consolas;">` + parseMeta(data[cardIndex][2]) + `</span>`;
+            mistakePile.push(data.splice(cardIndex, 1)[0]);
+          }
+        } else if (mistakePile.length) {
+          if (cardCheck == mistakePile[cardIndex][2].replaceAll(' ', '')) {
+            discardPile++;
+            results.innerHTML = `<span style="color: green; font-family: system, consolas;">` + parseMeta(mistakePile[cardIndex][2]) + `</span>`;
+            mistakePile.splice(cardIndex, 1)
+          } else {
+            results.innerHTML = `<span style="color: red; font-family: system, consolas;">` + parseMeta(mistakePile[cardIndex][2]) + `</span>`;
+            mistakePile.push(mistakePile.splice(cardIndex, 1)[0]);
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="content">
+
+    <div id="header">
+      <h1>PyFlashCards</h1>
+      <ul>
+        <li>Type the lines of code described in the prompt.</li>
+        <li>If the description talks about something that would use a code block (function, conditional statement, etc), only use the first line of code.</li>
+        <li>If you need to use quotes, please use <b>single quotes ( ' ' )</b></li>
+      </ul>
+    </div>
+
+    <div id="score">
+
+    </div>
+    <br>
+    <div id="cardPrompt">
+
+    </div>
+    <br>
+    <textarea rows=4 cols=40 id="cardAnswer" style="white-space: pre-wrap; font-family: system, consolas;"></textarea><br>
+    <button type="button" onclick="submitCard()">Submit</button>
+    <button type="button" onclick="nextCard()">Next Card</button><br>
+    <div id="results">
+
+    </div>
+  </div>
+  <script type="text/javascript">
+    nextCard();
+    document.getElementById('cardAnswer').addEventListener('keydown', function(e) {
+      if (e.key == 'Tab') {
+        e.preventDefault();
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+
+        // set textarea value to: text before caret + tab + text after caret
+        this.value = this.value.substring(0, start) +
+          "\t" + this.value.substring(end);
+
+        // put caret at right position again
+        this.selectionStart =
+          this.selectionEnd = start + 1;
+      }
+    });
+  </script>
+</body>
+
+</html>
